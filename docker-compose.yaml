@@ -1,0 +1,51 @@
+version: '3'
+
+networks:
+  postgres_net:
+    driver: bridge
+
+volumes:
+  postgres_vol:
+
+services:
+  kube_news:
+    image: edgard/kube_news:v1
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    networks:
+      - postgres_net
+    environment:
+      DB_DATABASE: kubedevnews
+      DB_USERNAME: user
+      DB_PASSWORD: password
+      DB_HOST: postgres_db
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres_db
+
+  postgres_db:
+    image: postgres:15.2
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: kubedevnews
+    ports:
+      - 15432:5432
+    networks:
+      - postgres_net
+    volumes:
+      - postgres_vol:/data/app
+
+  pgadmin:
+    image: dpage/pgadmin4:7.0
+    environment:
+     PGADMIN_DEFAULT_EMAIL: user@domain.com
+     PGADMIN_DEFAULT_PASSWORD: password
+    depends_on:
+      - postgres_db
+    ports:
+      - 8081:80
+    networks:
+      - postgres_net
